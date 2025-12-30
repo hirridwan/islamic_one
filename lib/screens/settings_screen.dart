@@ -57,7 +57,7 @@ class SettingsScreen extends StatelessWidget {
               trailing: Switch(
                 value: settings.isDarkMode,
                 activeTrackColor: const Color(0xFF1B5E20).withOpacity(0.5),
-                activeColor: const Color(0xFF1B5E20),
+                activeThumbColor: const Color(0xFF1B5E20),
                 onChanged: (value) => settings.toggleTheme(value),
               ),
             ),

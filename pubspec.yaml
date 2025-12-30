@@ -1,0 +1,38 @@
+name: simple_quran
+description: "Aplikasi Al-Quran digital lengkap dengan kumpulan doa harian."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  google_fonts: ^6.1.0
+  flutter_widget_from_html: ^0.10.0
+  shared_preferences: ^2.2.2
+  just_audio: ^0.9.36
+  scrollable_positioned_list: ^0.3.8
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  
+  # 1. Ini untuk iOS (Tetap kotak penuh, sistem iOS yang akan membulatkan)
+  image_path: "assets/icon.png" 
+
+  # 2. Ini KUNCI agar Android bisa jadi BULAT (Adaptive Icon)
+  adaptive_icon_background: "#FFFFFF" # Ganti dengan warna background icon Anda
+  adaptive_icon_foreground: "assets/icon.png"

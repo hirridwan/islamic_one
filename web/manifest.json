@@ -1,6 +1,6 @@
 {
-    "name": "simple_quran",
-    "short_name": "simple_quran",
+    "name": "islamic_one",
+    "short_name": "islamic_one",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

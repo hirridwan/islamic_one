@@ -1,3 +1,3 @@
-# simple_quran
+# islamic_one
 
 A new Flutter project.

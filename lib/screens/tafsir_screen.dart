@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart'; 
 import '../api_service.dart';
 import '../models.dart';
 
 class TafsirScreen extends StatefulWidget {
   final Surah surah;
-  const TafsirScreen({super.key, required this.surah});
+  final int? initialAyat; // Jika ini diisi, maka hanya tampilkan ayat ini saja
+
+  const TafsirScreen({super.key, required this.surah, this.initialAyat});
 
   @override
   State<TafsirScreen> createState() => _TafsirScreenState();
@@ -14,6 +17,10 @@ class TafsirScreen extends StatefulWidget {
 
 class _TafsirScreenState extends State<TafsirScreen> {
   final ApiService api = ApiService();
+  
+  final ItemScrollController itemScrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+
   late Future<List<Tafsir>> futureTafsir;
 
   @override
@@ -24,18 +31,36 @@ class _TafsirScreenState extends State<TafsirScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Judul AppBar dinamis: Jika per ayat, tampilkan nomor ayatnya
+    String titleText = "Tafsir";
+    if (widget.initialAyat != null) {
+      titleText = "Tafsir Ayat ${widget.initialAyat}";
+    }
+
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFF1B5E20),
+        foregroundColor: Colors.white,
+        centerTitle: true,
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
-              "Tafsir",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+            Text(
+              titleText, // Judul berubah sesuai konteks
+              style: GoogleFonts.inter(
+                fontSize: 14, 
+                fontWeight: FontWeight.w400,
+                color: Colors.white70
+              ),
             ),
             Text(
               widget.surah.namaLatin,
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 18),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, 
+                fontSize: 18,
+                color: Colors.white
+              ),
             ),
           ],
         ),
@@ -43,16 +68,12 @@ class _TafsirScreenState extends State<TafsirScreen> {
       body: FutureBuilder<List<Tafsir>>(
         future: futureTafsir,
         builder: (context, snapshot) {
-          // 1. Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF1B5E20),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFF1B5E20)),
             );
           }
           
-          // 2. Error State
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -60,12 +81,12 @@ class _TafsirScreenState extends State<TafsirScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 50),
+                    const Icon(Icons.wifi_off_rounded, color: Colors.grey, size: 60),
                     const SizedBox(height: 10),
                     Text(
-                      "Gagal memuat data tafsir.\n${snapshot.error}",
+                      "Gagal memuat data tafsir.",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.grey),
+                      style: GoogleFonts.inter(color: Colors.grey[700]),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -77,6 +98,7 @@ class _TafsirScreenState extends State<TafsirScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1B5E20),
                         foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
                       ),
                       child: const Text("Coba Lagi"),
                     )
@@ -86,19 +108,37 @@ class _TafsirScreenState extends State<TafsirScreen> {
             );
           }
 
-          // 3. Empty State
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text("Data Tafsir tidak tersedia"));
           }
 
-          final List<Tafsir> tafsirList = snapshot.data!;
+          final List<Tafsir> allTafsir = snapshot.data!;
+          List<Tafsir> displayedTafsir;
 
-          // 4. Success State
-          return ListView.builder(
+          // --- LOGIKA FILTERING ---
+          if (widget.initialAyat != null) {
+            // Jika user memilih "Lihat Tafsir Ayat Ini", filter list hanya untuk ayat tersebut
+            displayedTafsir = allTafsir.where((t) => t.ayat == widget.initialAyat).toList();
+          } else {
+            // Jika user memilih "Lihat Semua", tampilkan semua
+            displayedTafsir = allTafsir;
+          }
+
+          if (displayedTafsir.isEmpty) {
+             return const Center(child: Text("Tafsir untuk ayat ini belum tersedia."));
+          }
+
+          return ScrollablePositionedList.builder(
+            itemScrollController: itemScrollController,
+            itemPositionsListener: itemPositionsListener,
             padding: const EdgeInsets.all(16),
-            itemCount: tafsirList.length,
+            itemCount: displayedTafsir.length,
+            // Jika difilter (cuma 1 ayat), scroll index pasti 0.
+            // Jika semua ayat, scroll ke posisi yang dituju (kalau ada logic scroll spesifik, tp disini kita mulai dari 0 karena list sudah difilter atau full)
+            initialScrollIndex: 0, 
             itemBuilder: (context, index) {
-              final tafsir = tafsirList[index];
+              final tafsir = displayedTafsir[index];
+              
               return Container(
                 margin: const EdgeInsets.only(bottom: 24),
                 child: Column(
@@ -110,7 +150,7 @@ class _TafsirScreenState extends State<TafsirScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9), // Hijau sangat muda
+                            color: const Color(0xFFE8F5E9),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: const Color(0xFF1B5E20), width: 0.5),
                           ),
@@ -135,28 +175,26 @@ class _TafsirScreenState extends State<TafsirScreen> {
                     const SizedBox(height: 16),
                     
                     // Isi Tafsir
-                    // Menggunakan HtmlWidget karena teks dari API kadang mengandung format,
-                    // atau SelectableText jika teks biasa. HtmlWidget lebih aman untuk data API Quran.
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.withOpacity(0.1),
                             spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
                         ],
+                        border: Border.all(color: Colors.grey.shade100)
                       ),
                       child: HtmlWidget(
-                        // Mengganti \n menjadi <br> agar baris baru terbaca di HTML widget
                         tafsir.teks.replaceAll('\n', '<br>'),
                         textStyle: GoogleFonts.inter(
                           fontSize: 14,
-                          height: 1.8, // Line height agar nyaman dibaca
+                          height: 1.8, 
                           color: Colors.black87,
                         ),
                       ),

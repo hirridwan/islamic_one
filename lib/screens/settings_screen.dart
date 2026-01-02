@@ -225,7 +225,7 @@ class SettingsScreen extends StatelessWidget {
           
           Center(
             child: Text(
-              "Simple Quran v1.0.1",
+              "Islamic One v1.0.1",
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
           ),

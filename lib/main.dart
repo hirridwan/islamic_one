@@ -25,7 +25,7 @@ class SimpleQuranApp extends StatelessWidget {
     final settings = Provider.of<SettingsProvider>(context);
 
     return MaterialApp(
-      title: 'Simple Quran',
+      title: 'Islamic One',
       debugShowCheckedModeBanner: false,
       
       // --- KONFIGURASI TEMA LIGHT & DARK ---
